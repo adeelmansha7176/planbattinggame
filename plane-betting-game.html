@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Plane Betting Game</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    background-color: #222;
+    color: #eee;
+  }
+  .game-container {
+    text-align: center;
+  }
+  .flight-box {
+    width: 200px;
+    height: 100px;
+    border: 1px solid #aaa;
+    position: relative;
+    margin: 10px auto;
+    overflow: hidden;
+    background: linear-gradient(180deg, #333, #666);
+  }
+  .plane {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    font-size: 18px;
+    color: yellow;
+  }
+</style>
+</head>
+<body>
+
+<div class="game-container">
+  <h1>Welcome to the Plane Betting Game</h1>
+  <p>Account Holder: <span id="accountName"></span></p>
+  <p>Balance: $<span id="accountBalance"></span></p>
+  <input type="number" id="betAmount" placeholder="Enter bet amount">
+  <button id="betButton">Bet & Fly</button>
+  <div class="flight-box">
+    <span class="plane" id="plane"> <img src="plane.gif.gif" alt=""> </span>
+  </div>
+  <p class="odds-display" id="oddsDisplay">1.00x</p>
+  <button id="cashoutButton" disabled>Cash Out</button>
+  <p id="gameResult"></p>
+</div>
+
+<script>
+  const accountNameDisplay = document.getElementById('accountName');
+  const accountBalanceDisplay = document.getElementById('accountBalance');
+  const plane = document.getElementById('plane');
+  const betButton = document.getElementById('betButton');
+  const cashoutButton = document.getElementById('cashoutButton');
+  const oddsDisplay = document.getElementById('oddsDisplay');
+  const gameResult = document.getElementById('gameResult');
+  const betAmountInput = document.getElementById('betAmount');
+
+  let balance = parseFloat(localStorage.getItem('balance')) || 0;
+  let currentOdds = 1.00;
+  let exploded = false;
+  let interval;
+  let flightCount = 0;
+
+  accountNameDisplay.textContent = localStorage.getItem('userName') || 'Player';
+  accountBalanceDisplay.textContent = balance;
+
+  betButton.addEventListener('click', () => {
+    const betAmount = parseFloat(betAmountInput.value);
+    if (isNaN(betAmount) || betAmount <= 0 || betAmount > balance) {
+      alert('Invalid bet amount.');
+      return;
+    }
+
+    currentOdds = 1.00;
+    exploded = false;
+    balance -= betAmount;
+    accountBalanceDisplay.textContent = balance;
+    cashoutButton.disabled = false;
+    betButton.disabled = true;
+    oddsDisplay.textContent = `${currentOdds.toFixed(2)}x`;
+    gameResult.textContent = '';
+
+    const explosionOdds = (++flightCount % 3 === 0) ? 1.00 : (Math.random() * (3.34 - 1.0) + 1.0).toFixed(2);
+    let planePosition = 0;
+
+    interval = setInterval(() => {
+      currentOdds += 0.01;
+      oddsDisplay.textContent = `${currentOdds.toFixed(2)}x`;
+      planePosition += 2;
+      plane.style.left = `${planePosition}px`;
+
+      if (currentOdds >= explosionOdds) explode();
+    }, 100);
+  });
+
+  cashoutButton.addEventListener('click', () => {
+    if (!exploded) {
+      clearInterval(interval);
+      const payout = (betAmountInput.value * currentOdds).toFixed(2);
+      balance += parseFloat(payout);
+      accountBalanceDisplay.textContent = balance;
+      gameResult.textContent = `Cashed out at ${currentOdds.toFixed(2)}x! You won $${payout}.`;
+      resetGame();
+    }
+  });
+
+  function explode() {
+    exploded = true;
+    clearInterval(interval);
+    gameResult.textContent = `The plane exploded at ${currentOdds.toFixed(2)}x! You lost this round.`;
+    resetGame();
+    if (balance <= 0) {
+      alert('No balance left to bet.');
+      betButton.disabled = true;
+    }
+  }
+
+  function resetGame() {
+    betButton.disabled = false;
+    cashoutButton.disabled = true;
+    currentOdds = 1.00;
+    plane.style.left = '0px';
+  }
+</script>
+
+</body>
+</html>
